@@ -399,3 +399,15 @@ UltraConcrete-Det
 ```
 
 Ultrasonic AI Detection for Concrete Internal Structures.
+
+---
+
+## Contact
+
+For questions, bug reports, or suggestions regarding this project, please feel free to contact me.
+
+如在使用本项目过程中遇到任何问题、Bug，或有改进建议，欢迎通过邮箱联系。
+
+**Email:** 2975106762@qq.com
+
+You can also open an Issue on GitHub.
