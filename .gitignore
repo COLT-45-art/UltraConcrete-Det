@@ -1,0 +1,45 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets
+.env
+.env.*
+*.key
+*.pem
+
+# Runtime outputs
+outputs/
+uploads/
+runtime/
+logs/
+*.log
+
+# Dataset files
+*.npy
+*.npz
+
+# Model weights
+*.pt
+*.pth
+*.onnx
+*.engine
+*.joblib
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp

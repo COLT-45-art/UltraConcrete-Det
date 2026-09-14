@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>混凝土内部超声智能检测系统</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif; background: linear-gradient(135deg, #eef4ff, #f7f9fc); color: #1f2937; }
+        .header { background: linear-gradient(90deg, #123a70, #1769aa); color: white; padding: 30px 20px; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
+        .header h1 { margin: 0; font-size: 30px; letter-spacing: 2px; }
+        .header p { margin: 10px 0 0 0; opacity: 0.9; }
+        .container { max-width: 1100px; margin: 35px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 14px; padding: 28px; margin-bottom: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
+        .card-title { font-size: 21px; font-weight: bold; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid #e5e7eb; }
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group.full { grid-column: 1 / -1; }
+        label { margin-bottom: 8px; font-weight: bold; }
+        select, input[type="file"] { padding: 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 15px; background: white; }
+        .hint { margin-top: 7px; color: #6b7280; font-size: 13px; }
+        .button-area { margin-top: 28px; text-align: center; }
+        button { border: none; border-radius: 9px; padding: 14px 42px; font-size: 17px; cursor: pointer; background: linear-gradient(90deg, #1769aa, #2082c4); color: white; transition: 0.2s; }
+        button:hover { transform: translateY(-1px); box-shadow: 0 5px 12px rgba(23,105,170,0.25); }
+        button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+        #statusBox { display: none; margin-top: 22px; padding: 14px; border-radius: 8px; text-align: center; font-weight: bold; }
+        .status-running { display: block !important; color: #92400e; background: #fff7ed; border: 1px solid #fed7aa; }
+        .status-success { display: block !important; color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; }
+        .status-error { display: block !important; color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; }
+        #resultSection { display: none; }
+        .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+        .summary-item { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 10px; padding: 18px; text-align: center; }
+        .summary-label { color: #6b7280; font-size: 13px; }
+        .summary-value { margin-top: 8px; font-size: 25px; font-weight: bold; color: #1769aa; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #eef4fa; padding: 12px; border: 1px solid #dbe3ec; }
+        td { padding: 12px; border: 1px solid #e5e7eb; text-align: center; }
+        tr:hover { background: #f9fafb; }
+        .confidence { font-weight: bold; color: #1769aa; }
+        .image-area { margin-top: 30px; text-align: center; }
+        .result-image { max-width: 100%; max-height: 600px; border-radius: 10px; border: 1px solid #e5e7eb; box-shadow: 0 3px 12px rgba(0,0,0,0.08); }
+        .science-note { margin-top: 25px; padding: 15px; border-radius: 8px; background: #f8fafc; border-left: 4px solid #1769aa; color: #4b5563; line-height: 1.7; font-size: 14px; }
+        .footer { margin-top: 40px; text-align: center; color: #9ca3af; font-size: 13px; padding-bottom: 30px; }
+        @media(max-width: 700px) { .form-grid, .summary { grid-template-columns: 1fr; } .header h1 { font-size: 23px; } }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>混凝土内部超声智能检测系统</h1>
+    <p>低频超声脉冲回波 · AI 内部目标识别 · 智能分析</p>
+</div>
+<div class="container">
+    <div class="card">
+        <div class="card-title">超声检测数据</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>试件类型</label>
+                <select id="specimen">
+                    <option value="pk266">Pk266</option>
+                    <option value="pk050">Pk050</option>
+                </select>
+                <div class="hint">请选择与超声数据对应的试件类型</div>
+            </div>
+            <div class="form-group">
+                <label>扫描方向</label>
+                <select id="rotation">
+                    <option value="rot90">Rot90</option>
+                    <option value="rot00">Rot00</option>
+                </select>
+                <div class="hint">当前最终模型建议使用 Shear_Rot00 或 Shear_Rot90 数据</div>
+            </div>
+            <div class="form-group full">
+                <label>上传超声扫描文件</label>
+                <input id="fileInput" type="file" accept=".npy">
+                <div class="hint">当前支持三维 NumPy 超声扫描数据（.npy）</div>
+            </div>
+        </div>
+        <div class="button-area">
+            <button id="detectButton" onclick="startDetection()">开始智能检测</button>
+        </div>
+        <div id="statusBox"></div>
+    </div>
+
+    <div id="resultSection" class="card">
+        <div class="card-title">AI 检测结果</div>
+        <div class="summary">
+            <div class="summary-item">
+                <div class="summary-label">检测状态</div>
+                <div class="summary-value" style="font-size:20px;">检测完成</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">检测目标数量</div>
+                <div id="targetCount" class="summary-value">0</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">输入文件</div>
+                <div id="inputFilename" class="summary-value" style="font-size:14px; word-break:break-all;">-</div>
+            </div>
+        </div>
+        <h3>内部目标信息</h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>目标编号</th>
+                        <th>目标类型</th>
+                        <th>水平位置 X / mm</th>
+                        <th>埋深 / mm</th>
+                        <th>置信度</th>
+                    </tr>
+                </thead>
+                <tbody id="resultTable"></tbody>
+            </table>
+        </div>
+        <div id="imageArea" class="image-area">
+            <h3>内部目标位置可视化</h3>
+            <img id="resultImage" class="result-image" alt="检测结果图">
+        </div>
+        <div class="science-note">
+            <strong>结果说明：</strong>
+            当前模型用于混凝土内部目标及异常区域的智能识别。系统可输出目标水平位置、埋深及检测置信度。
+            当前模型仍处于开发验证阶段，Rot00 与 Rot90 数据均曾参与后处理流程开发，后续仍需使用更多独立试件进一步验证模型的泛化性能。
+        </div>
+    </div>
+    <div class="footer">
+        混凝土内部超声智能检测系统<br><br>开发调试接口：<a href="/docs" target="_blank">/docs</a>
+    </div>
+</div>
+
+<script>
+const POLL_INTERVAL_MS = 2000;
+const MAX_POLL_MINUTES = 30;
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function readJsonResponse(response) {
+    const text = await response.text();
+    let data = null;
+
+    if (text) {
+        try {
+            data = JSON.parse(text);
+        } catch (error) {
+            const preview = text.replace(/\s+/g, " ").slice(0, 500);
+            throw new Error(
+                `服务器返回了非 JSON 内容（HTTP ${response.status}）。` +
+                (preview ? ` 返回内容：${preview}` : "")
+            );
+        }
+    } else {
+        data = {};
+    }
+
+    if (!response.ok) {
+        const detail =
+            (data && (data.detail || data.error || data.message)) ||
+            `HTTP ${response.status}`;
+        throw new Error(detail);
+    }
+    return data;
+}
+
+async function pollTask(taskId, statusBox) {
+    const deadline = Date.now() + MAX_POLL_MINUTES * 60 * 1000;
+
+    while (Date.now() < deadline) {
+        const response = await fetch(
+            `/api/internal-task/${encodeURIComponent(taskId)}?t=${Date.now()}`,
+            { cache: "no-store" }
+        );
+        const data = await readJsonResponse(response);
+
+        if (data.status === "success") {
+            return data;
+        }
+        if (data.status === "error") {
+            throw new Error(data.error || data.detail || "AI 推理失败");
+        }
+
+        const phase = data.message || "AI 正在分析";
+        const elapsed = Number(data.elapsed_seconds || 0).toFixed(0);
+        statusBox.innerText =
+            `${phase}（已运行约 ${elapsed} 秒）\n请保持页面打开，系统会自动刷新结果。`;
+
+        await sleep(POLL_INTERVAL_MS);
+    }
+
+    throw new Error(
+        `检测任务超过 ${MAX_POLL_MINUTES} 分钟仍未完成，请查看魔搭运行日志。`
+    );
+}
+
+async function startDetection() {
+    const specimen = document.getElementById("specimen").value;
+    const rotation = document.getElementById("rotation").value;
+    const fileInput = document.getElementById("fileInput");
+    const button = document.getElementById("detectButton");
+    const statusBox = document.getElementById("statusBox");
+
+    if (fileInput.files.length === 0) {
+        alert("请先选择一个 .npy 超声扫描文件。");
+        return;
+    }
+
+    const file = fileInput.files[0];
+    if (!file.name.toLowerCase().endsWith(".npy")) {
+        alert("文件格式错误，请上传 .npy 文件。");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("specimen", specimen);
+    formData.append("rotation", rotation);
+
+    button.disabled = true;
+    button.innerText = "AI 正在分析，请稍候...";
+    statusBox.className = "status-running";
+    statusBox.innerText = "正在上传超声数据并创建检测任务...";
+    document.getElementById("resultSection").style.display = "none";
+
+    try {
+        const response = await fetch("/api/internal-detect", {
+            method: "POST",
+            body: formData
+        });
+        const submit = await readJsonResponse(response);
+
+        if (submit.task_id && (submit.status === "accepted" || submit.status === "processing")) {
+            statusBox.innerText = "文件上传完成，AI 推理任务已开始。";
+            const result = await pollTask(submit.task_id, statusBox);
+            showResult(result);
+            statusBox.className = "status-success";
+            statusBox.innerText =
+                "检测完成，共发现 " +
+                Number(result.detected_target_count || 0) +
+                " 个内部目标。";
+            return;
+        }
+
+        showResult(submit);
+        statusBox.className = "status-success";
+        statusBox.innerText =
+            "检测完成，共发现 " +
+            Number(submit.detected_target_count || 0) +
+            " 个内部目标。";
+
+    } catch (error) {
+        console.error(error);
+        statusBox.className = "status-error";
+        statusBox.innerText = "检测失败：" + (error.message || String(error));
+    } finally {
+        button.disabled = false;
+        button.innerText = "开始智能检测";
+    }
+}
+
+function showResult(data) {
+    const resultSection = document.getElementById("resultSection");
+    const targetCount = document.getElementById("targetCount");
+    const inputFilename = document.getElementById("inputFilename");
+    const resultTable = document.getElementById("resultTable");
+    const resultImage = document.getElementById("resultImage");
+
+    targetCount.innerText = Number(data.detected_target_count || 0);
+    inputFilename.innerText = data.original_filename || data.input_file || "-";
+    resultTable.innerHTML = "";
+
+    if (data.targets && data.targets.length > 0) {
+        data.targets.forEach(function(target) {
+            const row = document.createElement("tr");
+            const confidence = (Number(target.confidence || 0) * 100).toFixed(1);
+            row.innerHTML = `
+                <td>T${target.target_id}</td>
+                <td>内部目标</td>
+                <td>${Number(target.x_mm).toFixed(2)}</td>
+                <td>${Number(target.depth_mm).toFixed(2)}</td>
+                <td class="confidence">${confidence}%</td>
+            `;
+            resultTable.appendChild(row);
+        });
+    } else {
+        resultTable.innerHTML =
+            `<tr><td colspan="5">未检测到满足当前判定条件的内部目标</td></tr>`;
+    }
+
+    if (data.visualization_url) {
+        resultImage.style.display = "inline-block";
+        resultImage.src =
+            data.visualization_url +
+            (data.visualization_url.includes("?") ? "&" : "?") +
+            "t=" + Date.now();
+    } else {
+        resultImage.style.display = "none";
+    }
+
+    resultSection.style.display = "block";
+    resultSection.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+</body>
+</html>
